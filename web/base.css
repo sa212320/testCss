@@ -1,0 +1,312 @@
+/* ==========================================================================
+   base.css —— 測試頁自己的版面
+   ------------------------------------------------------------------------
+   硬規則：這個檔案裡不准出現任何「被測特性」。
+   禁用：flex gap / grid gap / dvh / svh / lvh / min() / max() / clamp()
+        / aspect-ratio / :is() / :has() / color-mix() / env()
+   允許：display:table / table-cell / float / margin / px / % / vh
+        / box-sizing / border-radius / position:fixed
+   理由：若版面本身踩到被測特性，測試頁在舊 WebView 上會自己爛掉，
+        就分不出是測項壞還是工具壞。
+   ========================================================================== */
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #222;
+  background: #fff;
+  padding: 10px;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- 頁首 ---------- */
+
+h1 { font-size: 17px; margin: 0 0 3px; }
+
+.sub { color: #666; font-size: 12px; margin: 0 0 10px; }
+
+/* 頁首的簡短指紋：頁尾 fixed 萬一在舊 WebView 上失效時的保險 */
+.fp-top {
+  background: #f2f2f2;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #444;
+  padding: 4px 6px;
+  margin: 0 0 12px;
+  word-wrap: break-word;
+}
+
+/* ---------- 首頁：環境指紋大字區 ----------
+   這是整個測試的 P0 產出。就算所有 CSS 測項都判讀失敗，只要拿到這一塊的
+   截圖，就能從 Chromium 版本號反推出全部支援度。所以字要大、要顯眼。 */
+
+.hero {
+  background: #111;
+  color: #fff;
+  border-radius: 5px;
+  padding: 11px 12px;
+  margin: 0 0 14px;
+}
+
+.hero-label {
+  font-size: 11px;
+  color: #9ab;
+  margin-bottom: 3px;
+}
+
+.hero-main {
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1.4;
+  color: #ffd75f;
+  word-wrap: break-word;
+}
+
+.hero-ua {
+  font-size: 10px;
+  color: #888;
+  line-height: 1.35;
+  margin-top: 7px;
+  word-wrap: break-word;
+}
+
+/* ---------- 首頁：操作說明 ---------- */
+
+.howto {
+  border: 1px solid #cde;
+  background: #f4f9ff;
+  border-radius: 4px;
+  padding: 9px 11px;
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.howto ol { margin: 6px 0 6px; padding-left: 20px; }
+
+.howto li { margin-bottom: 3px; }
+
+.howto .note {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid #cde;
+  font-size: 12px;
+  color: #555;
+}
+
+/* ---------- 測項卡片 ---------- */
+
+.item {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  padding: 8px;
+}
+
+.item h2 {
+  font-size: 14px;
+  margin: 0 0 5px;
+  font-weight: bold;
+}
+
+/* 所需 Chromium 版本徽章 */
+.ch {
+  display: inline-block;
+  background: #333;
+  color: #fff;
+  font-size: 11px;
+  font-weight: normal;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 5px;
+}
+
+/* 主專案實際用量 */
+.usage {
+  color: #888;
+  font-size: 11px;
+  font-weight: normal;
+}
+
+/* ---------- 引擎宣稱（純 CSS @supports 偵測，見 claims.css） ---------- */
+
+.claim {
+  font-size: 12px;
+  margin: 0 0 6px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #fafafa;
+}
+
+/* ---------- 實測數值 ----------
+   跟 .claim 長得像但刻意分開：.claim 帶著 ::before 的「引擎宣稱：…」文字，
+   而這個 class 的內容整個由 JS 填入。若共用 .claim，畫面上會先出現
+   「引擎宣稱：不支援」再接上實測數值，對方讀到的是自相矛盾的一行。 */
+
+.metric {
+  font-size: 12px;
+  margin: 0 0 6px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #eef4fc;
+  color: #04407a;
+}
+
+/* ---------- 陷阱警示 ----------
+   用在「引擎宣稱會騙人」或「失敗方式反直覺」的測項上。
+   最典型的是 flex gap：@supports 回報支援，但 flex 容器上不生效。 */
+
+.trap {
+  border: 1px solid #e8b4b4;
+  background: #fff6f6;
+  border-radius: 4px;
+  padding: 7px 9px;
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #703;
+}
+
+code {
+  font-family: monospace;
+  font-size: 11px;
+  background: #eee;
+  padding: 0 3px;
+  border-radius: 2px;
+  color: #333;
+}
+
+/* ---------- reftest 兩欄：用 table，絕不用 flex/grid ---------- */
+
+.ref {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.ref-cell {
+  display: table-cell;
+  width: 50%;
+  vertical-align: top;
+  padding: 4px;
+}
+
+.ref-cell + .ref-cell { border-left: 1px dashed #bbb; }
+
+.ref-label {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+/* ---------- 判讀說明 ---------- */
+
+.verdict {
+  font-size: 12px;
+  margin: 7px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid #eee;
+  color: #333;
+}
+
+.ok  { color: #0a7; }
+.bad { color: #c00; }
+
+/* ---------- 測試用圖形 ---------- */
+
+/* 標準方塊：所有測項的積木 */
+.bx {
+  width: 32px;
+  height: 32px;
+  background: #4a7fb5;
+}
+
+/* 容器外框，讓「塌掉」看得出來 */
+.box {
+  border: 1px solid #e0a;
+  background: #fdf5fb;
+}
+
+/* ---------- 目錄 ---------- */
+
+nav { margin: 12px 0; }
+
+nav a {
+  display: block;
+  padding: 9px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 7px;
+  text-decoration: none;
+  color: #06c;
+  font-size: 14px;
+}
+
+nav a .n {
+  display: inline-block;
+  background: #06c;
+  color: #fff;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 6px;
+}
+
+nav a .r { color: #888; font-size: 11px; }
+
+/* ---------- 頁間導覽 ---------- */
+
+.pager {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin: 4px 0 10px;
+}
+
+.pager a, .pager span {
+  display: table-cell;
+  width: 33.33%;
+  text-align: center;
+  padding: 8px 2px;
+  font-size: 13px;
+  color: #06c;
+  text-decoration: none;
+  border: 1px solid #ccc;
+}
+
+.pager span { color: #bbb; }
+
+/* ---------- 頁尾指紋 ----------
+   刻意用 static 而不是 position:fixed，有兩個理由：
+
+   一、每頁都比一個螢幕高，對方必須用捲動截圖才截得完整。fixed 元素在
+       捲動截圖裡會停在中間擋住內容（實測就擋掉了一整個測項），
+       這比「截圖沒帶到頁尾」嚴重得多。
+   二、舊 Android WebView 的 position:fixed 在捲動時本來就不穩定 ——
+       版面不該依賴任何自己也在被懷疑的特性。
+
+   指紋不怕漏掉：頁首另外有一份 .fp-top，捲動截圖會同時含頭尾。 */
+
+footer {
+  background: #111;
+  color: #eee;
+  font-size: 11px;
+  line-height: 1.45;
+  padding: 7px 9px;
+  margin-top: 14px;
+  border-radius: 4px;
+}
+
+footer .b { color: #ffd75f; }
+
+footer .u {
+  color: #999;
+  font-size: 10px;
+  word-wrap: break-word;
+  display: block;
+}

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5. 視覺效果 · CSS 支援度測試</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="claims.css">
+<style>
+/* --------------------------------------------------------------------------
+   本頁測視覺效果類特性。這類特性大多畫不出「用保守 CSS 做的參考圖」，
+   所以改用兩種替代做法：
+
+   甲、疊加 fallback + 刺眼的錯誤色
+       background: #c00;                     ← 不支援時留在紅色
+       background: linear-gradient(...);     ← 認得就覆蓋掉
+       判讀變成「看到紅色就是不支援」，比「應該是漸層吧」好判斷太多，
+       而且不需要並排就能自我證明。
+
+   乙、能用保守 CSS 畫出參考圖的（clip-path 的三角形可以用 border 畫），
+       仍然走並排 reftest。
+   -------------------------------------------------------------------------- */
+
+.sw { width: 100px; height: 44px; }
+
+/* 1. linear-gradient —— Chromium 26 */
+.t-grad {
+  background: #c00;                                  /* 不支援 → 紅色 */
+  background: linear-gradient(#4a7fb5, #dce8f4);     /* 支援 → 漸層 */
+}
+
+/* 2. filter: blur() —— Chromium 53 */
+.t-filter {
+  filter: blur(1.8px);
+  font-size: 15px;
+  font-weight: bold;
+  color: #4a7fb5;
+  padding: 10px 0;
+}
+.r-filter {
+  font-size: 15px;
+  font-weight: bold;
+  color: #4a7fb5;
+  padding: 10px 0;
+}
+
+/* 3. clip-path —— Chromium 55
+   這一項可以做並排：三角形用 border 也畫得出來。 */
+.t-clip {
+  width: 50px;
+  height: 44px;
+  background: #4a7fb5;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.r-clip {
+  width: 0;
+  height: 0;
+  border-left: 25px solid transparent;
+  border-right: 25px solid transparent;
+  border-bottom: 44px solid #4a7fb5;
+}
+
+/* 4. mix-blend-mode —— Chromium 41 */
+.blend-wrap {
+  position: relative;
+  width: 110px;
+  height: 44px;
+  background: #f2c14e;
+}
+.blend-top {
+  position: absolute;
+  left: 26px;
+  top: 0;
+  width: 58px;
+  height: 44px;
+  background: #4a7fb5;
+  mix-blend-mode: multiply;
+}
+
+/* 5. backdrop-filter —— Chromium 76（錨點，主專案沒用到）
+   注意：這一項依賴 repeating-linear-gradient 畫底紋，所以若第 1 項
+   （漸層）是壞的，這一項的結果無意義。頁面上有標註。 */
+.bdf-wrap {
+  background-color: #4a7fb5;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.55) 0, rgba(255, 255, 255, 0.55) 5px,
+    rgba(255, 255, 255, 0) 5px, rgba(255, 255, 255, 0) 11px
+  );
+  padding: 13px;
+}
+.bdf-glass {
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+</style>
+
+<h1>5. 視覺效果</h1>
+<p class="sub">Chromium 26~76 · 共 6 頁 · 這是第 6 頁（最後一頁）</p>
+<div class="fp-top fp-env"></div>
+
+<div class="pager">
+  <a href="04-viewport.html">← 上一頁</a>
+  <span>6 / 6</span>
+  <a href="06-modern.html">選配頁 →</a>
+</div>
+
+<div class="howto">
+  <b>這一頁大多沒有左右並排</b>，請照每一項下面的文字判斷。第 1 項最簡單 —— <b>看到紅色就是不支援</b>。
+</div>
+
+<!-- ===== 1. linear-gradient ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 26</span>linear-gradient 漸層 <span class="usage">主專案用了 7 處</span></h2>
+  <p class="claim cl-grad"></p>
+  <div class="sw t-grad"></div>
+  <p class="verdict"><b>上面這個方塊是什麼顏色？</b><br>
+    <span class="ok">✓ 藍色由深到淺的漸層 = 支援</span><br>
+    <span class="bad">✗ 整塊都是紅色 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 2. filter: blur() ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 53</span>filter: blur() <span class="usage">主專案用了 9 處</span></h2>
+  <p class="claim cl-filter"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：套了模糊</div>
+      <div class="t-filter">模糊測試 ABC</div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：沒套模糊</div>
+      <div class="r-filter">模糊測試 ABC</div>
+    </div>
+  </div>
+  <p class="verdict"><b>左邊的字有模糊掉嗎？</b>（這一項左右<b>應該不一樣</b>，跟前面幾頁相反）<br>
+    <span class="ok">✓ 左邊模糊、右邊清楚 = 支援</span><br>
+    <span class="bad">✗ 左右都一樣清楚 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 3. clip-path ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 55</span>clip-path <span class="usage">主專案用了 4 處</span></h2>
+  <p class="claim cl-clip"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：clip-path 切三角</div>
+      <div class="t-clip"></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：border 畫三角</div>
+      <div class="r-clip"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩個都是三角形嗎？</b><br>
+    <span class="ok">✓ 兩邊都是三角形 = 支援</span><br>
+    <span class="bad">✗ 左邊還是正方形 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 4. mix-blend-mode ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 41</span>mix-blend-mode <span class="usage">主專案用了 2 處</span></h2>
+  <p class="claim cl-blend"></p>
+  <div class="blend-wrap"><div class="blend-top"></div></div>
+  <p class="verdict"><b>黃色和藍色重疊的那一塊，顏色有變深嗎？</b><br>
+    <span class="ok">✓ 重疊處變成偏暗的深綠色 = 支援</span><br>
+    <span class="bad">✗ 重疊處就是純藍色，把黃色完全蓋掉 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 5. backdrop-filter ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 76</span>backdrop-filter <span class="usage">主專案目前 0 處 · 版本錨點</span></h2>
+  <p class="claim cl-bdf"></p>
+  <div class="bdf-wrap"><div class="bdf-glass"></div></div>
+  <p class="verdict"><b>白框裡面的斜條紋，比框外面模糊嗎？</b><br>
+    <span class="ok">✓ 框裡的條紋是霧的、糊掉的 = 支援</span><br>
+    <span class="bad">✗ 框裡的條紋跟框外一樣清楚 = 不支援</span><br>
+    <span class="usage">如果這一項連斜條紋都看不到，代表第 1 項的漸層也是壞的，那這一項就不用判讀了。</span>
+  </p>
+</div>
+
+<div class="item">
+  <h2>都截完了，謝謝！</h2>
+  <p class="verdict">總共應該有 <b>6 張</b>截圖（目錄頁 + 這 5 頁）。麻煩一起傳回來就可以了。<br>
+    <span class="usage">還有一頁標「選配」的，那是額外的好奇，<b>可以直接跳過</b>。</span>
+  </p>
+</div>
+
+<div class="pager">
+  <a href="04-viewport.html">← 上一頁</a>
+  <span>6 / 6</span>
+  <a href="06-modern.html">選配頁 →</a>
+</div>
+
+<footer>
+  <span class="b">build __BUILD__</span> · <span class="fp-env"></span>
+  <span class="u fp-ua"></span>
+</footer>
+
+<script src="fingerprint.js"></script>
+</html>

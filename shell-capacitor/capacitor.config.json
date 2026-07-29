@@ -1,0 +1,10 @@
+{
+  "appId": "live.goer.csstest.system",
+  "appName": "CSS測試 系統版",
+  "webDir": "www",
+  "server": {
+    "allowNavigation": [
+      "sa212320.github.io"
+    ]
+  }
+}

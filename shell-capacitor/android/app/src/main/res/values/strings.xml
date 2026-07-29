@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CSS測試 系統版</string>
+    <string name="title_activity_main">CSS測試 系統版</string>
+    <string name="package_name">live.goer.csstest.system</string>
+    <string name="custom_url_scheme">live.goer.csstest.system</string>
+</resources>

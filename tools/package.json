@@ -1,0 +1,14 @@
+{
+  "name": "testcss-tools",
+  "private": true,
+  "type": "module",
+  "description": "開發期的驗證工具。測試頁本身零建置，這些是可選的。",
+  "scripts": {
+    "check": "node check-reftests.mjs out/shots http://127.0.0.1:8765",
+    "check:live": "node check-reftests.mjs out/shots-live https://sa212320.github.io/testCss",
+    "check:loader": "node check-loader.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.0"
+  }
+}

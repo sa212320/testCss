@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSS 測試 系統版</title>
+<style>
+  body { font-family: sans-serif; margin: 0; padding: 22px 18px; color: #222; line-height: 1.6; }
+  h1 { font-size: 17px; margin: 0 0 12px; }
+  p { font-size: 14px; margin: 0 0 12px; }
+  a.btn {
+    display: block; padding: 13px; margin-top: 20px;
+    border: 1px solid #ccc; border-radius: 5px;
+    text-decoration: none; color: #06c; text-align: center; font-size: 15px;
+  }
+  .hint { font-size: 12px; color: #777; }
+  .warn { color: #b00; }
+</style>
+
+<h1 id="st">檢查連線…</h1>
+<p id="msg">如果一直停在這一頁，請把 app 關掉重開一次。</p>
+<p class="hint">下面的離線版測項內容跟線上版完全相同，只是不會拿到最新修正。</p>
+
+<a class="btn" href="./offline/">改用離線版測試頁</a>
+
+<script>
+/* ==========================================================================
+   ES5 loader
+   --------------------------------------------------------------------------
+   為什麼不用 capacitor.config 的 server.url：
+   server.url 只是換掉起始網址，完全沒碰 WebView 的 HTTP cache。舊 WebView
+   的 cache 特別黏，加上 GitHub Pages 預設 Cache-Control: max-age=600 且
+   不允許自訂 header，結果就是頁面改了 app 裡看不到，得刪掉 app 重裝才更新。
+   這裡每次開啟都帶一個新的 timestamp，URL 每次都不同，任何一層 cache 都繞得過，
+   而 APK 只需要建一次。
+
+   為什麼要先探測、不直接 location.replace()：
+   直接跳轉的版本實測是壞的 —— 網路不通或憑證不被信任時，WebView 會導航到
+   自己的錯誤頁，這個 loader 頁就離開了，底下的「離線版」連結永遠點不到。
+   而這正是最需要 fallback 的情境：Android 7.1.1 以下不信任 Let's Encrypt 的
+   ISRG Root X1，而 GitHub Pages 用的就是它。用 <script> 探測而非 XHR，
+   是因為 script 載入不受 CORS 限制，GitHub Pages 沒送 CORS header。
+
+   刻意只用 ES5：目標引擎是 Chromium 57~65，任何 ES2016+ 語法會讓整支
+   script SyntaxError，跳轉不會發生，對方只會看到一個停住的畫面。
+   ========================================================================== */
+(function () {
+  var base = 'https://sa212320.github.io/testCss/';
+  var ts = +new Date();
+  var done = false;
+
+  function stayOffline(why) {
+    if (done) { return; }
+    done = true;
+    document.getElementById('st').innerHTML = '連不上線上版';
+    document.getElementById('msg').innerHTML =
+      '<span class="warn">' + why + '</span><br>' +
+      '請直接點下面的離線版，測項內容完全一樣。';
+  }
+
+  var s = document.createElement('script');
+
+  s.onload = function () {
+    if (done) { return; }
+    done = true;
+    window.location.replace(base + '?t=' + ts);
+  };
+
+  s.onerror = function () {
+    stayOffline('連線失敗 —— 可能是沒有網路，或這台裝置不信任網站憑證。');
+  };
+
+  s.src = base + 'probe.js?t=' + ts;
+  document.getElementsByTagName('head')[0].appendChild(s);
+
+  // 保險：某些舊 WebView 在特定失敗情況下 onload / onerror 都不觸發，
+  // 沒有這個 timeout 就會永遠停在「檢查連線…」。
+  setTimeout(function () { stayOffline('連線逾時。'); }, 8000);
+})();
+</script>
+</html>

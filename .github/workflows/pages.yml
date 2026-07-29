@@ -1,0 +1,54 @@
+name: 部署測試頁到 GitHub Pages
+
+# 這是日常的迭代路徑：改了 web/ 裡的測項就 push，對方重開 app 就看到新版。
+# APK 不必重建 —— loader 頁每次開啟都帶新的 timestamp 去抓最新的線上版。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 每頁頁首與頁尾都印這個時間戳。收到截圖時第一件事就是看它 ——
+      # 若是舊的，代表對方看到的是快取版本，請他重開 app 即可，
+      # 不必花時間去懷疑測項本身。
+      - name: 注入 build 時間戳
+        run: |
+          STAMP=$(TZ=Asia/Taipei date '+%Y-%m-%d %H:%M')
+          echo "build 時間戳：$STAMP"
+          sed -i "s/__BUILD__/$STAMP/g" web/*.html
+          # 確認真的替換掉了，別讓 __BUILD__ 原封不動上線
+          if grep -q '__BUILD__' web/*.html; then
+            echo "::error::還有 __BUILD__ 沒被替換"
+            grep -l '__BUILD__' web/*.html
+            exit 1
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

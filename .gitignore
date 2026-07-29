@@ -1,0 +1,25 @@
+node_modules/
+
+# 離線 fallback 是 web/ 的複本，由 scripts/sync-offline.sh 產生。
+# 刻意不進版控：同一份測試頁若在 repo 裡存在兩份，改了一邊忘了另一邊，
+# 就會拿到自相矛盾的測試結果 —— 而測試結果矛盾比測試失敗更難查。
+shell-capacitor/www/offline/
+
+# Android 建置產物
+**/build/
+.gradle/
+local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+
+# tools/ 的驗證輸出（截圖與報告）
+tools/out/
+tools/*.err
+tools/*.log

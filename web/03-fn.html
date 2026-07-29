@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3. CSS 函式 · CSS 支援度測試</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="claims.css">
+<style>
+/* --------------------------------------------------------------------------
+   本頁測 CSS 數學函式與 :is() 選擇器。
+   min() / max() / clamp() 是同一批實作（Chromium 79 一起上線），
+   所以三者的結果理論上必須一致 —— 若出現不一致，代表這個引擎有被
+   廠商動過的部分實作，那整份報告的版本推論都要重新檢視。
+   這種交叉驗證幾乎不花成本，但能抓到單一測項抓不到的異常。
+
+   所有測試圖形寬度都壓在 130px 以內：reftest 兩欄各佔螢幕一半，
+   360px 寬的手機上每欄可用寬度只有約 150px。
+   -------------------------------------------------------------------------- */
+
+/* 1. min() —— Chromium 79
+   容器固定 130px，測試值 min(90px, 100%) 應該算出 90px。
+   不支援時整條 width 被丟棄 → width:auto → 撐滿 130px → 明顯更寬。 */
+.cage { width: 130px; border: 1px dashed #e0a; padding: 3px; }
+.bar { height: 26px; background: #4a7fb5; }
+
+.t-min { width: min(90px, 100%); }
+.r-min { width: 90px; }
+
+/* 2. clamp() —— Chromium 79，同一批實作 */
+.t-clamp { width: clamp(50px, 90px, 120px); }
+.r-clamp { width: 90px; }
+
+/* 3. aspect-ratio —— Chromium 88
+   不支援時高度變成 auto，而內容是空的 → 高度 0 → 方塊整個消失。
+   這是全部測項裡最明顯的一種壞法。 */
+.t-ar { width: 100px; aspect-ratio: 5 / 2; background: #4a7fb5; }
+.r-ar { width: 100px; height: 40px; background: #4a7fb5; }
+
+/* 4. :is() —— Chromium 88
+   先把方塊塗成灰色，再用 :is() 塗成藍色。
+   支援 → 藍色；不支援 → 整條規則被丟棄 → 留在灰色。
+   兩條規則特異性都是 (0,1,1)，靠後定義者勝，所以順序不能顛倒。 */
+.t-is b, .t-is i,
+.r-is b, .r-is i {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  background: #ddd;
+  margin-right: 6px;
+}
+
+.t-is :is(b, i) { background: #4a7fb5; }
+
+.r-is b, .r-is i { background: #4a7fb5; }
+</style>
+
+<h1>3. CSS 函式</h1>
+<p class="sub">Chromium 79~88 · 共 6 頁 · 這是第 4 頁</p>
+<div class="fp-top fp-env"></div>
+
+<div class="pager">
+  <a href="02-gap.html">← 上一頁</a>
+  <span>4 / 6</span>
+  <a href="04-viewport.html">下一頁 →</a>
+</div>
+
+<div class="howto">
+  前兩項看<b>藍色長條的長度</b>，第三項看<b>方塊還在不在</b>，第四項看<b>方塊的顏色</b>。
+</div>
+
+<!-- ===== 1. min() ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 79</span>min() / max() <span class="usage">主專案用了 87 處</span></h2>
+  <p class="claim cl-min"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：min(90px, 100%)</div>
+      <div class="cage"><div class="bar t-min"></div></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：寫死 90px</div>
+      <div class="cage"><div class="bar r-min"></div></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩條藍色長條一樣長嗎？</b>（粉紅虛線框是容器，兩邊一樣寬）<br>
+    <span class="ok">✓ 一樣長，兩邊都沒有填滿虛線框 = 支援</span><br>
+    <span class="bad">✗ 左邊那條變長，把虛線框填滿了 = 不支援</span><br>
+    <span class="usage">max() 跟 min() 是同一批實作，結果會相同，所以不另外測。</span>
+  </p>
+</div>
+
+<!-- ===== 2. clamp() ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 79</span>clamp() <span class="usage">主專案目前 0 處 · 交叉驗證用</span></h2>
+  <p class="claim cl-clamp"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：clamp(50px, 90px, 120px)</div>
+      <div class="cage"><div class="bar t-clamp"></div></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：寫死 90px</div>
+      <div class="cage"><div class="bar r-clamp"></div></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩條藍色長條一樣長嗎？</b><br>
+    <span class="ok">✓ 一樣長 = 支援</span><br>
+    <span class="bad">✗ 左邊那條填滿了虛線框 = 不支援</span><br>
+    <span class="usage">這一項的結果應該跟上一項<b>完全相同</b>。若一項支援、另一項不支援，請務必回報，那代表引擎被改過。</span>
+  </p>
+</div>
+
+<!-- ===== 3. aspect-ratio ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 88</span>aspect-ratio <span class="usage">主專案用了 9 處</span></h2>
+  <p class="claim cl-ar"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：aspect-ratio 5/2</div>
+      <div class="t-ar"></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：寫死 100×40</div>
+      <div class="r-ar"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩個藍色方塊一樣大嗎？</b><br>
+    <span class="ok">✓ 一樣大 = 支援</span><br>
+    <span class="bad">✗ 左邊完全消失（那格空空的）= 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 4. :is() ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 88</span>:is() 選擇器 <span class="usage">主專案用了 2 處</span></h2>
+  <p class="claim cl-is"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：用 :is() 上色</div>
+      <div class="t-is"><b></b><i></i></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：直接上色</div>
+      <div class="r-is"><b></b><i></i></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右四個方塊都是藍色嗎？</b><br>
+    <span class="ok">✓ 左右都藍 = 支援</span><br>
+    <span class="bad">✗ 左邊兩個是灰色的 = 不支援</span>
+  </p>
+</div>
+
+<div class="pager">
+  <a href="02-gap.html">← 上一頁</a>
+  <span>4 / 6</span>
+  <a href="04-viewport.html">下一頁 →</a>
+</div>
+
+<footer>
+  <span class="b">build __BUILD__</span> · <span class="fp-env"></span>
+  <span class="u fp-ua"></span>
+</footer>
+
+<script src="fingerprint.js"></script>
+</html>

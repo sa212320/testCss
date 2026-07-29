@@ -1,0 +1,85 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'live.goer.csstest.bundled'
+
+    // 必須是 36：GeckoView 153 依賴的 androidx.media3 1.10.1 要求編譯時
+    // 至少對著 API 36。這也是這個殼的 AGP 要比 Capacitor 殼新的原因。
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "live.goer.csstest.bundled"
+
+        // GeckoView 153 要求 26。目標裝置是 Android 11（API 30），綽綽有餘。
+        // Capacitor 殼那邊保持 23 不動 —— 它沒有這個限制，留低一點比較通用。
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+
+        // 兩個 ABI 都包，開了 .so 壓縮後 APK 約 141MB（單 arm64 約 75MB）。
+        // 這是刻意的取捨：目標裝置只有一台、又不方便常接，
+        // 萬一只包 arm64 卻遇到 32 位元機器，就要再等一輪 ——
+        // 一輪的代價遠高於這 65MB 流量。
+        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // GeckoView 帶著 libxul.so（arm64 版就 136MB）等一整套引擎。
+            // AGP 對 minSdk 23+ 預設 useLegacyPackaging = false，也就是 .so
+            // 原封不動放進 APK 不壓縮，好讓系統直接 memory-map 載入 ——
+            // 實測 261MB 的 .so 在 APK 裡還是 261MB，壓縮率 100%，
+            // 整包 278MB。
+            //
+            // 打開壓縮後啟動會稍慢、安裝後佔用空間變多，但這是一次性的
+            // 測試 APK，要靠對方用手機下載 —— 下載大小遠比啟動速度重要。
+            //
+            // （順帶修正一個誤判：AGP 會抱怨 "Unable to strip ... libxul.so"，
+            // 看起來像是缺 NDK，其實那些 .so 本來就已經 stripped，
+            // 沒有 debug symbols 可剝。裝 NDK 不會讓 APK 變小一個位元。）
+            useLegacyPackaging = true
+        }
+    }
+}
+
+dependencies {
+    // 用當下最新的 release。目標裝置已確認是 Android 11（API 30），
+    // 遠高於這一版要求的 minSdk 26，所以沒有遷就舊版的理由。
+    //
+    // 選版的來龍去脈（查證過，免得下次又走一遍冤枉路）：
+    //
+    // 一、Mozilla Maven 上的 geckoview 只有 release / beta / omni 三個通道，
+    //     沒有 ESR artifact（geckoview-esr、geckoview-esr128、geckoview-esr140
+    //     全是 404）。而且每個主版本只有 2~3 個 build 且全是 .0 結尾，
+    //     也就是拿不到 140.1.x 那種 ESR 長期安全更新。
+    //     所以「挑 ESR 換長期支援」這條路在 GeckoView 上根本不存在 ——
+    //     選版準則就是「minSdk 相容的最新版」，然後定期升。
+    //
+    // 二、minSdk 的分界（直接讀各版 AAR 的 AndroidManifest 查出來的）：
+    //       Gecko 128 / 132 / 136 / 140 / 141 / 144 → minSdk 21
+    //       Gecko 145 起（含 148 / 153）           → minSdk 26
+    //     所以哪天真要支援 API 21~25 的裝置，天花板是 144.0.20251027123126，
+    //     不是原先誤以為的 128。
+    //
+    // 版本清單：https://maven.mozilla.org/maven2/org/mozilla/geckoview/geckoview/maven-metadata.xml
+    implementation "org.mozilla.geckoview:geckoview:153.0.20260727124451"
+}

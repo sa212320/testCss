@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSS 支援度測試</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="claims.css">
+
+<h1>CSS 支援度測試</h1>
+<p class="sub">共 6 頁 · 這是第 1 頁</p>
+
+<div class="hero">
+  <div class="hero-label">這台裝置的瀏覽器引擎</div>
+  <div class="hero-main fp-env">（讀取中…若這行一直沒變，代表 JavaScript 沒跑起來，請直接截圖回報）</div>
+  <div class="hero-ua fp-ua"></div>
+</div>
+
+<div class="howto">
+  <b>請幫忙這樣做</b>
+  <ol>
+    <li>先截這一頁，要含到上面深色框裡的字</li>
+    <li>再依序打開下面的第 2~6 頁。每頁都比一個螢幕長，請用手機的<b>「捲動截圖 / 長截圖」</b>把整頁截下來；如果手機沒有這個功能，分成兩三張截也可以，<b>只要不漏掉任何一項</b></li>
+    <li>最後那頁標了<b>「選配」</b>，<b>可以直接跳過</b> —— 那是我自己好奇多加的，不影響要解決的問題</li>
+    <li>判讀方式：多數測項是<b>左右並排</b>，只要看<b>左右長得一不一樣</b>，不需要懂 CSS</li>
+  </ol>
+  <p class="note">如果覺得畫面是舊的，把 app 關掉重開一次就會拿到最新版 —— 對一下每頁最下面那行的 build 時間。</p>
+</div>
+
+<nav>
+  <a href="01-baseline.html"><span class="n">2</span>基準對照<br><span class="r">Chromium 49~57 · 這頁預期全部正常，若這頁就壞代表引擎比推測的更舊</span></a>
+  <a href="02-gap.html"><span class="n">3</span>gap 與 safe-area<br><span class="r">Chromium 57~69 · 關鍵頁，決定 400 多處寫法有沒有救</span></a>
+  <a href="03-fn.html"><span class="n">4</span>CSS 函式<br><span class="r">Chromium 79~88 · min() max() clamp() aspect-ratio :is()</span></a>
+  <a href="04-viewport.html"><span class="n">5</span>視窗單位<br><span class="r">Chromium 105~111 · 含 dvh，這是首要嫌犯</span></a>
+  <a href="05-visual.html"><span class="n">6</span>視覺效果<br><span class="r">Chromium 26~76 · 這頁沒有並排，要看文字說明</span></a>
+  <a href="06-modern.html"><span class="n">選配</span>新語法探索<br><span class="r">可以跳過 · 2020~2025 的新 CSS，純粹好奇引擎能力上限</span></a>
+</nav>
+
+<footer>
+  <span class="b">build __BUILD__</span> · <span class="fp-env"></span>
+  <span class="u fp-ua"></span>
+</footer>
+
+<script src="fingerprint.js"></script>
+</html>

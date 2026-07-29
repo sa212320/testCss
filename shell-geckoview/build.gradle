@@ -1,0 +1,21 @@
+// AGP 刻意比 shell-capacitor（8.7.2）新。
+//
+// 原本兩邊對齊在 8.7.2，但建置失敗：GeckoView 153 的依賴鏈裡
+// androidx.media3:media3-common:1.10.1 要求 compileSdk ≥ 36，
+// 而 AGP 8.7.2 支援的上限是 35。
+//
+// 修法是升 AGP，不是降 GeckoView —— 這個殼存在的目的就是回答
+// 「最新引擎能不能救」，為了遷就工具鏈而換舊引擎會讓答案失去意義。
+// 兩個殼是各自獨立的 Gradle 專案，AGP 不同版沒有問題，
+// 而且仍然共用同一個 JDK 21 與同一份 Gradle 8.11.1 wrapper。
+// Kotlin 必須跟 GeckoView 拉進來的 kotlin-stdlib 對齊。
+// GeckoView 153 依賴 kotlin-stdlib 2.3.21，配 Kotlin plugin 2.1.0 會炸：
+//   Module was compiled with an incompatible version of Kotlin.
+//   The binary version of its metadata is 2.3.0, expected version is 2.1.0
+// 而且會連帶觸發編譯器內部錯誤（source must not be null），
+// 錯誤訊息看起來像程式碼壞了，其實是版本不匹配。
+// 之前用 GeckoView 144 沒事，是因為它依賴的 stdlib 還在 2.1 系列。
+plugins {
+    id 'com.android.application' version '8.10.1' apply false
+    id 'org.jetbrains.kotlin.android' version '2.3.21' apply false
+}

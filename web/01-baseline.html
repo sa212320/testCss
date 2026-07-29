@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1. 基準對照 · CSS 支援度測試</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="claims.css">
+<style>
+/* --------------------------------------------------------------------------
+   本頁測項專屬 CSS。
+   命名規則：.t-xxx = 測試側（用被測特性畫）
+            .r-xxx = 參考側（只用保守 CSS 畫出同樣的圖形，必定正確）
+   -------------------------------------------------------------------------- */
+
+/* 1. var(--x) —— Chromium 49 */
+.t-var { --probe-color: #4a7fb5; background: var(--probe-color); }
+.r-var { background: #4a7fb5; }
+
+/* 2. position: sticky —— Chromium 56
+   測試側：sticky 標題列，捲動後應該黏在容器頂端
+   參考側：用 relative + absolute 把標題列釘在容器頂端（必定正確） */
+.t-sticky {
+  height: 120px;
+  overflow: auto;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+.t-sticky-head {
+  position: sticky;
+  top: 0;
+  background: #4a7fb5;
+  color: #fff;
+  padding: 5px 7px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.r-sticky {
+  position: relative;
+  height: 120px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+.r-sticky-head {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: #4a7fb5;
+  color: #fff;
+  padding: 5px 7px;
+  font-size: 12px;
+  line-height: 1.5;
+  z-index: 2;
+}
+.r-sticky-scroll {
+  height: 100%;
+  overflow: auto;
+  padding-top: 28px;   /* = 標題列高度：12px × 1.5 + 5px × 2 */
+}
+
+.filler p {
+  margin: 0 0 8px;
+  padding: 0 7px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 3. display: grid —— Chromium 57
+   刻意不用 gap：這一項只測 grid 本身，間距是下一頁的事。
+   混進兩個變數會讓判讀失去意義。 */
+.t-grid {
+  display: grid;
+  grid-template-columns: 32px 32px 32px;
+}
+
+.r-grid-item { float: left; }
+.r-grid::after { content: ""; display: block; clear: both; }
+</style>
+
+<h1>1. 基準對照</h1>
+<p class="sub">Chromium 49~57 · 共 6 頁 · 這是第 2 頁</p>
+<div class="fp-top fp-env"></div>
+
+<div class="pager">
+  <a href="index.html">← 目錄</a>
+  <span>2 / 6</span>
+  <a href="02-gap.html">下一頁 →</a>
+</div>
+
+<div class="howto">
+  這一頁<b>預期全部正常</b>。它的作用是對照組 —— 如果連這頁就壞掉，代表引擎比我們推測的更舊，後面幾頁的結果要重新解讀。
+</div>
+
+<!-- ===== 工具自我檢查 ===== -->
+<div class="item">
+  <h2><span class="ch">工具</span>測試工具自我檢查</h2>
+  <p class="claim cl-meta"></p>
+  <p class="verdict">
+    上面這行<b>必定</b>要顯示「引擎宣稱：支援」。<br>
+    若顯示「不支援」，代表這個引擎連 <code>@supports</code> 都不認得，那麼後面每一項的「引擎宣稱」全部不可信，<b>只能看左右並排的結果</b>。
+  </p>
+</div>
+
+<!-- ===== 1. var(--x) ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 49</span>CSS 變數 var(--x) <span class="usage">主專案用了 414 處</span></h2>
+  <p class="claim cl-var"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：用 var()</div>
+      <div class="bx t-var"></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：寫死顏色</div>
+      <div class="bx r-var"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩個方塊顏色一樣嗎？</b><br>
+    <span class="ok">✓ 一樣（都是藍色）= 支援</span><br>
+    <span class="bad">✗ 左邊變透明或看不見 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 2. position: sticky ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 56</span>position: sticky <span class="usage">主專案用了 7 處</span></h2>
+  <p class="claim cl-sticky"></p>
+  <p class="verdict" style="margin-top:0;border-top:0;padding-top:0;">兩邊都已經自動捲動過了，不需要你手動滑。</p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：用 sticky</div>
+      <div class="t-sticky scroll-70">
+        <div class="t-sticky-head">我應該黏在頂端</div>
+        <div class="filler">
+          <p>第 1 行內容</p><p>第 2 行內容</p><p>第 3 行內容</p>
+          <p>第 4 行內容</p><p>第 5 行內容</p><p>第 6 行內容</p>
+          <p>第 7 行內容</p><p>第 8 行內容</p>
+        </div>
+      </div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：用 absolute 釘住</div>
+      <div class="r-sticky">
+        <div class="r-sticky-head">我應該黏在頂端</div>
+        <div class="r-sticky-scroll scroll-70">
+          <div class="filler">
+            <p>第 1 行內容</p><p>第 2 行內容</p><p>第 3 行內容</p>
+            <p>第 4 行內容</p><p>第 5 行內容</p><p>第 6 行內容</p>
+            <p>第 7 行內容</p><p>第 8 行內容</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩個框的藍色標題列，都還在框的最上方嗎？</b><br>
+    <span class="ok">✓ 兩邊標題列都在頂端 = 支援</span><br>
+    <span class="bad">✗ 左邊的標題列被捲走看不見了 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 3. display: grid ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 57</span>display: grid <span class="usage">主專案用了 108 處</span></h2>
+  <p class="claim cl-grid"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：用 grid 排</div>
+      <div class="t-grid">
+        <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+      </div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：用 float 排</div>
+      <div class="r-grid">
+        <div class="bx r-grid-item"></div><div class="bx r-grid-item"></div><div class="bx r-grid-item"></div>
+      </div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右都是三個方塊「橫著排成一列」嗎？</b>（這一項刻意沒有間距，方塊是緊貼的）<br>
+    <span class="ok">✓ 兩邊都橫排 = 支援</span><br>
+    <span class="bad">✗ 左邊變成三個方塊「直著疊成一行行」= 不支援</span>
+  </p>
+</div>
+
+<div class="pager">
+  <a href="index.html">← 目錄</a>
+  <span>2 / 6</span>
+  <a href="02-gap.html">下一頁 →</a>
+</div>
+
+<footer>
+  <span class="b">build __BUILD__</span> · <span class="fp-env"></span>
+  <span class="u fp-ua"></span>
+</footer>
+
+<script src="fingerprint.js"></script>
+</html>

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6. 新語法探索（選配）· CSS 支援度測試</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="claims.css">
+<style>
+/* --------------------------------------------------------------------------
+   這一頁跟前面五頁的用途不同。
+
+   前五頁是為了量化 主專案的災情，測項全是「專案實際用到的 + 版本錨點」。
+   這一頁是探索引擎的能力上限，刻意包含連 Chrome 都很新的東西。
+
+   兩個必然的結果，先講清楚免得誤讀：
+   一、在系統 WebView（Chromium 58）上這一整頁會全紅 —— 這些語法晚了
+       七八年才出現，全紅是正確答案，不是壞掉。
+   二、有資訊量的是 GeckoView 那一欄。
+
+   徽章標的是「Chrome 大約哪一年首發」，不是 Firefox 的門檻 ——
+   Firefox 的狀況正是這一頁要測出來的東西。有一項刻意留著看反例：
+   subgrid 是 Firefox 2019 年就支援、Chrome 晚到 2023 年才跟上。
+   -------------------------------------------------------------------------- */
+
+/* 年份徽章用藍色，跟前五頁的黑色「Ch XX」區隔開，避免看成同一種標註 */
+.yr {
+  display: inline-block;
+  background: #2b5c8a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: normal;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 5px;
+}
+
+.sw2 { width: 100px; height: 40px; }
+
+/* ---- 1. @property：註冊自訂屬性，帶型別與 initial-value ----
+   測試側刻意不設 --box-color 的值，只靠 @property 的 initial-value。
+   支援 → 取得 initial-value 而上色；不支援 → @property 整塊被忽略，
+   var(--box-color) 是未定義的變數 → background 宣告無效 → 沒有顏色。 */
+@property --box-color {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #4a7fb5;
+}
+.t-property { background: var(--box-color); }
+.r-property { background: #4a7fb5; }
+
+/* ---- 2. @container：容器查詢 ----
+   容器固定 120px，查詢條件 min-width:100px 必定成立。
+   支援 → 藍色；不支援 → @container 整塊被忽略 → 留在灰色。 */
+.t-container-wrap { container-type: inline-size; width: 120px; }
+.t-container { height: 40px; background: #ddd; }
+@container (min-width: 100px) {
+  .t-container { background: #4a7fb5; }
+}
+.r-container { width: 120px; height: 40px; background: #4a7fb5; }
+
+/* ---- 3. subgrid（反例：Firefox 2019 就支援，Chrome 晚到 2023）----
+   外層三欄，內層用 subgrid 繼承外層軌道。
+   支援 → 三個方塊對齊外層軌道、等寬；
+   不支援 → grid-template-columns: subgrid 無效 → 內層變單欄 → 直排。 */
+.t-subgrid-outer { display: grid; grid-template-columns: 32px 32px 32px; }
+.t-subgrid-inner { display: grid; grid-template-columns: subgrid; grid-column: span 3; }
+.r-subgrid { display: grid; grid-template-columns: 32px 32px 32px; }
+
+/* ---- 4. oklch()：感知均勻色彩空間 ----
+   疊加 fallback：不支援就留在灰色，一眼看得出來。
+   不做並排，因為 oklch 換算回 hex 的參考色沒辦法精確到「看起來一樣」。 */
+.t-oklch {
+  background: #bbb;
+  background: oklch(60% 0.13 255);
+}
+
+/* ---- 5. CSS 巢狀（&）---- */
+.t-nest i, .r-nest i {
+  display: inline-block; width: 40px; height: 40px; background: #ddd;
+}
+.t-nest {
+  & > i { background: #4a7fb5; }
+}
+.r-nest i { background: #4a7fb5; }
+
+/* ---- 6. @scope ----
+   裡面必須寫 :scope i 而不是只寫 i。
+   @scope 不把 scope root 計入特異性，所以 `i` 只有 (0,0,1)，
+   會輸給上面設灰底的 `.t-scope i` (0,1,1) —— 結果在支援 @scope 的引擎上
+   方塊照樣是灰的，看起來像「不支援」。第一版就是這樣寫錯，
+   被 tools/check-reftests.mjs 抓出來（Chromium 151 宣稱支援但左右不一致）。
+   加上 :scope 之後特異性是 (0,1,1)，與灰底規則相同，靠後定義者勝。 */
+.t-scope i, .r-scope i {
+  display: inline-block; width: 40px; height: 40px; background: #ddd;
+}
+@scope (.t-scope) {
+  :scope i { background: #4a7fb5; }
+}
+.r-scope i { background: #4a7fb5; }
+
+/* ---- 7. light-dark() ----
+   疊加 fallback。淺色模式下應取第一個顏色。 */
+.t-lightdark {
+  background: #bbb;
+  background: light-dark(#4a7fb5, #223344);
+}
+
+/* 只看宣稱的那一區：讓每項的宣稱獨立一行，比較好讀 */
+.claimlist { margin: 6px 0 0; padding-left: 0; list-style: none; }
+.claimlist li {
+  margin-bottom: 9px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+.claimlist li:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
+.claimlist .claim { display: block; margin: 4px 0 0; }
+.claimlist .why { color: #888; font-size: 11px; }
+</style>
+
+<h1>6. 新語法探索</h1>
+<p class="sub">選配頁 · 這頁是額外的好奇，不是災情清單</p>
+<div class="fp-top fp-env"></div>
+
+<div class="pager">
+  <a href="05-visual.html">← 上一頁</a>
+  <span>選配</span>
+  <a href="index.html">回目錄</a>
+</div>
+
+<div class="trap">
+  <b>這一頁在「系統版」app 裡會整頁全紅，那是正確答案，不是壞掉。</b>
+  這些語法比那台裝置的瀏覽器引擎晚了七八年才出現。有意義的是「自帶版」app 的結果。<br>
+  藍色徽章是 <b>Chrome 大約哪一年首發</b>，不是 Firefox 的門檻 —— Firefox 支援到哪，正是這一頁要測的。<br>
+  另外這一頁有兩項刻意不列「引擎宣稱」：偵測 at-rule 需要
+  <code>@supports at-rule(...)</code>，而那個偵測語法本身是 2025 年才有的、比被測的特性還新，
+  會反過來把「支援」報成「不支援」。那兩項只看並排。
+</div>
+
+<!-- ===== 可以看畫面判讀的 ===== -->
+
+<div class="item">
+  <h2><span class="yr">2020</span>@property 註冊自訂屬性</h2>
+  <p class="metric">這項<b>沒有列引擎宣稱</b> —— 偵測 at-rule 要用
+    <code>@supports at-rule(@property)</code>，而 <code>at-rule()</code> 本身是
+    2025 年才有的語法，比被測的特性還新，結果會反過來騙人。<b>只看下面的並排。</b></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：只靠 initial-value</div>
+      <div class="sw2 t-property"></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：寫死顏色</div>
+      <div class="sw2 r-property"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右都是藍色嗎？</b><br>
+    <span class="ok">✓ 都藍 = 支援</span> ／ <span class="bad">✗ 左邊沒顏色 = 不支援</span>
+  </p>
+</div>
+
+<div class="item">
+  <h2><span class="yr">2022</span>@container 容器查詢</h2>
+  <p class="claim cl-container"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：容器查詢上色</div>
+      <div class="t-container-wrap"><div class="t-container"></div></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：直接上色</div>
+      <div class="r-container"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右都是藍色嗎？</b><br>
+    <span class="ok">✓ 都藍 = 支援</span> ／ <span class="bad">✗ 左邊是灰色 = 不支援</span>
+  </p>
+</div>
+
+<div class="item">
+  <h2><span class="yr">2023</span>subgrid <span class="usage">反例：Firefox 2019 就支援，Chrome 晚 4 年</span></h2>
+  <p class="claim cl-subgrid"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：內層用 subgrid</div>
+      <div class="t-subgrid-outer">
+        <div class="t-subgrid-inner">
+          <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：直接三欄</div>
+      <div class="r-subgrid">
+        <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+      </div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右都是三塊橫排嗎？</b><br>
+    <span class="ok">✓ 都橫排 = 支援</span> ／ <span class="bad">✗ 左邊變成直排 = 不支援</span>
+  </p>
+</div>
+
+<div class="item">
+  <h2><span class="yr">2023</span>oklch() 色彩</h2>
+  <p class="claim cl-oklch"></p>
+  <div class="sw2 t-oklch"></div>
+  <p class="verdict"><b>上面這塊是什麼顏色？</b>（這項沒有並排 —— oklch 換算回 hex 沒辦法精確到「看起來一樣」）<br>
+    <span class="ok">✓ 藍色 = 支援</span> ／ <span class="bad">✗ 灰色 = 不支援</span>
+  </p>
+</div>
+
+<div class="item">
+  <h2><span class="yr">2023</span>CSS 巢狀（&amp;）</h2>
+  <p class="claim cl-nesting"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：巢狀規則上色</div>
+      <div class="t-nest"><i></i></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：一般規則上色</div>
+      <div class="r-nest"><i></i></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右都是藍色嗎？</b><br>
+    <span class="ok">✓ 都藍 = 支援</span> ／ <span class="bad">✗ 左邊是灰色 = 不支援</span>
+  </p>
+</div>
+
+<div class="item">
+  <h2><span class="yr">2023</span>@scope</h2>
+  <p class="metric">同上，這項也<b>沒有列引擎宣稱</b>（`at-rule()` 偵測不可靠）。<b>只看下面的並排。</b></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：@scope 內上色</div>
+      <div class="t-scope"><i></i></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：一般規則上色</div>
+      <div class="r-scope"><i></i></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右都是藍色嗎？</b><br>
+    <span class="ok">✓ 都藍 = 支援</span> ／ <span class="bad">✗ 左邊是灰色 = 不支援</span>
+  </p>
+</div>
+
+<div class="item">
+  <h2><span class="yr">2024</span>light-dark()</h2>
+  <p class="claim cl-lightdark"></p>
+  <div class="sw2 t-lightdark"></div>
+  <p class="verdict"><b>上面這塊是什麼顏色？</b><br>
+    <span class="ok">✓ 藍色 = 支援</span> ／ <span class="bad">✗ 灰色 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 只看引擎宣稱的 ===== -->
+
+<div class="item">
+  <h2>只看引擎宣稱的項目</h2>
+  <p class="verdict" style="margin-top:0;border-top:0;padding-top:0;">
+    這些特性沒辦法用一張靜態圖判讀 —— 有的需要互動（彈出層、捲動）、有的視覺差異太細微、
+    有的根本沒有等效的保守寫法可以當參考。所以只列引擎自己的回答。<br>
+    <span class="usage">注意：若某項的偵測語法本身我寫錯了，也會顯示「不支援」。這一頁是探索性的，不是精確判定。</span>
+  </p>
+  <ul class="claimlist">
+    <li><span class="yr">2023</span><code>text-wrap: balance</code> 標題自動平衡行長
+      <span class="why">（視覺差異太細微，靜態圖判不出來）</span>
+      <span class="claim cl-balance"></span></li>
+
+    <li><span class="yr">2023</span><code>animation-timeline: scroll()</code> 捲動驅動動畫
+      <span class="why">（需要捲動才看得出來）</span>
+      <span class="claim cl-sda"></span></li>
+
+    <li><span class="yr">2023</span><code>:popover-open</code> 原生彈出層
+      <span class="why">（需要點擊互動）</span>
+      <span class="claim cl-popover"></span></li>
+
+    <li><span class="yr">2024</span><code>anchor-name</code> 錨點定位
+      <span class="why">（沒有等效的保守寫法可當參考）</span>
+      <span class="claim cl-anchor"></span></li>
+
+    <li><span class="yr">2024</span><code>field-sizing: content</code> 輸入框隨內容縮放
+      <span class="why">（需要輸入文字）</span>
+      <span class="claim cl-fieldsizing"></span></li>
+
+    <li><span class="yr">2024</span><code>calc-size()</code> 對 auto 做動畫
+      <span class="why">（需要動畫過程）</span>
+      <span class="claim cl-calcsize"></span></li>
+
+    <li><span class="yr">2025</span><code>text-box-trim</code> 裁掉字型的上下留白
+      <span class="why">（差異只有幾個 px）</span>
+      <span class="claim cl-textbox"></span></li>
+
+    <li><span class="yr">2025</span><code>shape()</code> 函式畫路徑
+      <span class="claim cl-shapefn"></span></li>
+
+    <li><span class="yr">2025</span><code>corner-shape</code> 圓角形狀（squircle 等）
+      <span class="claim cl-corner"></span></li>
+
+    <li><span class="yr">2025</span><code>if()</code> 條件函式
+      <span class="claim cl-iffn"></span></li>
+
+    <li><span class="yr">2025</span><code>reading-flow</code> 閱讀順序
+      <span class="why">（要用鍵盤 Tab 才測得出來）</span>
+      <span class="claim cl-readingflow"></span></li>
+  </ul>
+</div>
+
+<div class="pager">
+  <a href="05-visual.html">← 上一頁</a>
+  <span>選配</span>
+  <a href="index.html">回目錄</a>
+</div>
+
+<footer>
+  <span class="b">build __BUILD__</span> · <span class="fp-env"></span>
+  <span class="u fp-ua"></span>
+</footer>
+
+<script src="fingerprint.js"></script>
+</html>

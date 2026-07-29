@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 名稱必須跟 Capacitor 殼明顯不同：對方要裝兩個 app、分別截兩組圖，
+         名字混了整輪對照就廢了。頁面上的環境指紋會再標一次是哪個引擎，雙保險。 -->
+    <string name="app_name">CSS測試 自帶版</string>
+</resources>

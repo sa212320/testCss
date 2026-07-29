@@ -1,0 +1,254 @@
+/* ==========================================================================
+   claims.css —— 引擎「宣稱」支援度偵測（純 CSS，零 JS）
+   ------------------------------------------------------------------------
+   做法：預設所有 .claim 都顯示「不支援」，只有 @supports 命中時才改寫成
+        「支援」。所以在完全不認得 @supports 的引擎上（Chromium < 28），
+        全部落到「不支援」—— 這是合理的降級。
+
+   為什麼值得做：舊 WebView 最惡毒的情形是「宣稱支援，但渲染壞掉」。
+   最經典的就是 gap —— Chromium 66~83 認得 gap 屬性（grid 上有效），
+   所以 @supports (gap: 1px) 回 true，但 flex 容器上完全不生效。
+   把「宣稱」和 reftest 的「實際」並列，這種騙人的情況就藏不住。
+
+   注意：.claim::before 的預設值必須寫在所有 @supports 區塊之前，
+        否則特異性相同時後者不會贏。
+   ========================================================================== */
+
+.claim { color: #c00; }
+.claim::before { content: "引擎宣稱：不支援"; }
+
+/* ---------- 工具自我檢查 ----------
+   @supports 本身需要 Chromium 28。若引擎連 @supports 都不認得，
+   下面每一條「引擎宣稱」都會落到「不支援」—— 那是工具失效，不是真的全不支援，
+   會把整份報告讀錯方向。這個條件必定為真，所以它顯示「不支援」時
+   就是在告訴我們：底下的宣稱欄位一律不可信，只能看 reftest。 */
+
+@supports (color: red) {
+  .cl-meta { color: #0a7; }
+  .cl-meta::before { content: "引擎宣稱：支援"; }
+}
+
+/* ---------- Chromium 49~57 ---------- */
+
+@supports (--x: 1) {
+  .cl-var { color: #0a7; }
+  .cl-var::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (position: sticky) {
+  .cl-sticky { color: #0a7; }
+  .cl-sticky::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (display: grid) {
+  .cl-grid { color: #0a7; }
+  .cl-grid::before { content: "引擎宣稱：支援"; }
+}
+
+/* ---------- Chromium 57~69 ---------- */
+
+@supports (grid-gap: 1px) {
+  .cl-gridgap-old { color: #0a7; }
+  .cl-gridgap-old::before { content: "引擎宣稱：支援"; }
+}
+
+/* gap 只能整體偵測，無法分辨 flex / grid 上下文 —— 這正是陷阱所在 */
+@supports (gap: 1px) {
+  .cl-gap { color: #0a7; }
+  .cl-gap::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  .cl-env { color: #0a7; }
+  .cl-env::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (height: calc(10px + env(safe-area-inset-top))) {
+  .cl-calcenv { color: #0a7; }
+  .cl-calcenv::before { content: "引擎宣稱：支援"; }
+}
+
+/* ---------- Chromium 79~88 ---------- */
+
+@supports (width: min(1px, 2px)) {
+  .cl-min { color: #0a7; }
+  .cl-min::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (width: clamp(1px, 2px, 3px)) {
+  .cl-clamp { color: #0a7; }
+  .cl-clamp::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (aspect-ratio: 1 / 1) {
+  .cl-ar { color: #0a7; }
+  .cl-ar::before { content: "引擎宣稱：支援"; }
+}
+
+/* selector() 本身需要 Chromium 83；在更舊的引擎上條件為 false，
+   結論仍然正確（:is() 要 88，比 83 更新） */
+@supports selector(:is(b)) {
+  .cl-is { color: #0a7; }
+  .cl-is::before { content: "引擎宣稱：支援"; }
+}
+
+/* ---------- Chromium 105~111 ---------- */
+
+@supports selector(:has(b)) {
+  .cl-has { color: #0a7; }
+  .cl-has::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (height: 1dvh) {
+  .cl-dvh { color: #0a7; }
+  .cl-dvh::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (height: 1svh) {
+  .cl-svh { color: #0a7; }
+  .cl-svh::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  .cl-cmix { color: #0a7; }
+  .cl-cmix::before { content: "引擎宣稱：支援"; }
+}
+
+/* ---------- 視覺類 ---------- */
+
+@supports (background: linear-gradient(red, blue)) {
+  .cl-grad { color: #0a7; }
+  .cl-grad::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (filter: blur(1px)) {
+  .cl-filter { color: #0a7; }
+  .cl-filter::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (clip-path: polygon(0 0, 100% 0, 0 100%)) {
+  .cl-clip { color: #0a7; }
+  .cl-clip::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (mix-blend-mode: multiply) {
+  .cl-blend { color: #0a7; }
+  .cl-blend::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .cl-bdf { color: #0a7; }
+  .cl-bdf::before { content: "引擎宣稱：支援"; }
+}
+
+/* ==========================================================================
+   06-modern.html 的探索性測項
+   ------------------------------------------------------------------------
+   這一區跟上面幾組的用途不同：上面是為了量化 主專案的災情，
+   這一區是探索引擎的能力上限，所以刻意包含「連 Chrome 都很新」的東西。
+
+   在 Chromium 58 上這一整區必然全紅（那些語法晚了七八年才出現），
+   所以它對殼 A 沒有資訊量 —— 有意義的是殼 B（GeckoView）那一欄。
+   ========================================================================== */
+
+/* ---------- 2020~2022 ----------
+
+   不要用 @supports at-rule(@xxx) 偵測 at-rule。
+
+   實測踩過：at-rule() 這個 @supports 擴充本身是 2025 年才加進來的，
+   比被偵測的特性還新。Gecko 128 支援 @property 與 @container，
+   但不認得 at-rule() 這個偵測語法 → 條件為 false → 顯示「不支援」，
+   而並排的實際渲染卻是支援的。
+
+   「偵測方法不被支援」不等於「被偵測的特性不被支援」——
+   這是與 flex gap（宣稱支援但實際壞掉）方向相反的另一種騙人方式。
+
+   @container 改用屬性偵測（container-type 是實作 @container 的必要條件）。
+   @property 與 @scope 沒有可靠的 CSS-only 偵測方式，所以那兩項在頁面上
+   不列宣稱，直接標明只看並排。 */
+
+@supports (container-type: inline-size) {
+  .cl-container { color: #0a7; }
+  .cl-container::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (grid-template-rows: subgrid) {
+  .cl-subgrid { color: #0a7; }
+  .cl-subgrid::before { content: "引擎宣稱：支援"; }
+}
+
+/* ---------- 2023 ---------- */
+
+@supports (color: oklch(70% 0.1 200)) {
+  .cl-oklch { color: #0a7; }
+  .cl-oklch::before { content: "引擎宣稱：支援"; }
+}
+
+@supports selector(&) {
+  .cl-nesting { color: #0a7; }
+  .cl-nesting::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (text-wrap: balance) {
+  .cl-balance { color: #0a7; }
+  .cl-balance::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (animation-timeline: scroll()) {
+  .cl-sda { color: #0a7; }
+  .cl-sda::before { content: "引擎宣稱：支援"; }
+}
+
+@supports selector(:popover-open) {
+  .cl-popover { color: #0a7; }
+  .cl-popover::before { content: "引擎宣稱：支援"; }
+}
+
+/* ---------- 2024 ---------- */
+
+@supports (color: light-dark(#000, #fff)) {
+  .cl-lightdark { color: #0a7; }
+  .cl-lightdark::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (anchor-name: --a) {
+  .cl-anchor { color: #0a7; }
+  .cl-anchor::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (field-sizing: content) {
+  .cl-fieldsizing { color: #0a7; }
+  .cl-fieldsizing::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (height: calc-size(auto, size)) {
+  .cl-calcsize { color: #0a7; }
+  .cl-calcsize::before { content: "引擎宣稱：支援"; }
+}
+
+/* ---------- 2025 ---------- */
+
+@supports (text-box-trim: trim-both) {
+  .cl-textbox { color: #0a7; }
+  .cl-textbox::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (clip-path: shape(from 0 0, line to 100% 0)) {
+  .cl-shapefn { color: #0a7; }
+  .cl-shapefn::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (corner-shape: squircle) {
+  .cl-corner { color: #0a7; }
+  .cl-corner::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (width: if(style(--x: 1): 10px; else: 20px)) {
+  .cl-iffn { color: #0a7; }
+  .cl-iffn::before { content: "引擎宣稱：支援"; }
+}
+
+@supports (reading-flow: grid-order) {
+  .cl-readingflow { color: #0a7; }
+  .cl-readingflow::before { content: "引擎宣稱：支援"; }
+}

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2. gap 與 safe-area · CSS 支援度測試</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="claims.css">
+<style>
+/* --------------------------------------------------------------------------
+   本頁是整份測試的關鍵頁。
+   主專案有 409 處 gap，而 gap 有三種不同的支援門檻：
+     grid-gap（舊語法）  Chromium 57
+     gap 用在 grid       Chromium 66
+     gap 用在 flex       Chromium 84
+   把三者拆成獨立測項，才能知道「哪一種寫法在這台機器上還能用」。
+   這直接決定 409 處裡有多少能靠改語法救、多少只能改 margin。
+   -------------------------------------------------------------------------- */
+
+/* 共用參考側：float + margin。刻意不用 grid/flex，這樣即使兩者都壞了，
+   參考圖仍然畫得出正確的間距。 */
+.r-spaced::after { content: ""; display: block; clear: both; }
+.r-spaced .bx { float: left; margin-right: 14px; }
+.r-spaced .bx:last-child { margin-right: 0; }
+
+/* 1. grid-gap 舊語法 —— Chromium 57 */
+.t-gridgap-old {
+  display: grid;
+  grid-template-columns: 32px 32px 32px;
+  grid-gap: 14px;
+}
+
+/* 2. gap 用在 grid —— Chromium 66 */
+.t-gap-grid {
+  display: grid;
+  grid-template-columns: 32px 32px 32px;
+  gap: 14px;
+}
+
+/* 3. gap 用在 flex —— Chromium 84
+   這一項的參考側刻意也用 flex，只把 gap 換成 margin。
+   flex 本身 Chromium 29 就支援，所以左右只差「gap」這一個變數，
+   是嚴格的對照實驗。 */
+.t-gap-flex { display: flex; gap: 14px; }
+
+.r-gap-flex { display: flex; }
+.r-gap-flex .bx { margin-right: 14px; }
+.r-gap-flex .bx:last-child { margin-right: 0; }
+
+/* 4. env(safe-area-inset-*) —— Chromium 69
+   用「疊加 fallback」偵測：
+       padding-left: 50px;                        ← 先給一個明顯的值
+       padding-left: env(safe-area-inset-left);   ← 認得就覆蓋掉
+   支援   → 第二條生效 → 讀到實際 inset（直立手機幾乎總是 0）→ 沒有留白
+   不支援 → 第二條被丟棄 → 保留 50px → 明顯留白
+   用 inset-left 而不是 inset-top，因為直立時左右 inset 幾乎必為 0，
+   而挖孔屏的 top inset 可能非 0，會造成誤判。 */
+.t-env {
+  padding-left: 50px;
+  padding-left: env(safe-area-inset-left);
+  background: #cde;
+}
+.r-env {
+  padding-left: 0;
+  background: #cde;
+}
+
+/* 給 JS 讀 computed 值用，肉眼分不出來的部分靠數值補 */
+#env-probe {
+  padding-left: 50px;
+  padding-left: env(safe-area-inset-left);
+  height: 0;
+  overflow: hidden;
+}
+
+/* 5. calc() 裡混 env() —— 主專案真正的災難所在
+   實際寫法是 height: calc(100dvh - env(safe-area-inset-top) - ...)
+   calc() 裡只要有一個 token 不認得，整條宣告會被丟棄 ——
+   不是退化成部分正確，是整個高度沒了。 */
+.t-calcenv {
+  height: calc(80px + env(safe-area-inset-left));
+  background: #4a7fb5;
+}
+.r-calcenv {
+  height: 80px;
+  background: #4a7fb5;
+}
+</style>
+
+<h1>2. gap 與 safe-area</h1>
+<p class="sub">Chromium 57~69 · 共 6 頁 · 這是第 3 頁</p>
+<div class="fp-top fp-env"></div>
+
+<div class="pager">
+  <a href="01-baseline.html">← 上一頁</a>
+  <span>3 / 6</span>
+  <a href="03-fn.html">下一頁 →</a>
+</div>
+
+<div class="howto">
+  這一頁最重要。前三項都是「方塊之間有沒有間距」，寫法不同、支援門檻也不同 —— 請特別注意<b>哪一項有間距、哪一項沒有</b>。
+</div>
+
+<!-- ===== 1. grid-gap 舊語法 ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 57</span>grid-gap（舊語法） <span class="usage">主專案目前 0 處，但這是救援方案</span></h2>
+  <p class="claim cl-gridgap-old"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：grid + grid-gap</div>
+      <div class="t-gridgap-old">
+        <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+      </div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：float + margin</div>
+      <div class="r-spaced">
+        <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+      </div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩邊方塊之間的空隙一樣寬嗎？</b><br>
+    <span class="ok">✓ 一樣（都有明顯空隙）= 支援</span><br>
+    <span class="bad">✗ 左邊方塊黏在一起 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 2. gap 用在 grid ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 66</span>gap 用在 grid <span class="usage">主專案用了 36 處</span></h2>
+  <p class="claim cl-gap"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：grid + gap</div>
+      <div class="t-gap-grid">
+        <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+      </div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：float + margin</div>
+      <div class="r-spaced">
+        <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+      </div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩邊方塊之間的空隙一樣寬嗎？</b><br>
+    <span class="ok">✓ 一樣 = 支援</span><br>
+    <span class="bad">✗ 左邊方塊黏在一起 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 3. gap 用在 flex（最大宗） ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 84</span>gap 用在 flex <span class="usage">主專案用了 319 處，最大宗</span></h2>
+  <p class="claim cl-gap"></p>
+  <p class="trap">
+    <b>注意：這一項的「引擎宣稱」會騙人。</b>
+    <code>@supports</code> 只能整體偵測 <code>gap</code> 這個屬性，分不出 flex 還是 grid。
+    Chromium 66~83 認得 <code>gap</code>（grid 上有效），所以會回報「支援」，但 flex 容器上完全不生效。
+    <b>這一項只看下面左右並排的結果。</b>
+  </p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：flex + gap</div>
+      <div class="t-gap-flex">
+        <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+      </div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：flex + margin</div>
+      <div class="r-gap-flex">
+        <div class="bx"></div><div class="bx"></div><div class="bx"></div>
+      </div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩邊方塊之間的空隙一樣寬嗎？</b><br>
+    <span class="ok">✓ 一樣 = 支援</span><br>
+    <span class="bad">✗ 左邊三個方塊完全黏在一起 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 4. env(safe-area) ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 69</span>env(safe-area-inset-*) <span class="usage">主專案用了 209 處</span></h2>
+  <p class="claim cl-env"></p>
+  <p class="metric fp-env-value"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：用 env()</div>
+      <div class="t-env"><div class="bx"></div></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：不留白</div>
+      <div class="r-env"><div class="bx"></div></div>
+    </div>
+  </div>
+  <div id="env-probe"></div>
+  <p class="verdict"><b>左右兩個藍色方塊，在淺藍底色裡的位置一樣嗎？</b><br>
+    <span class="ok">✓ 兩邊方塊都貼著左邊 = 支援</span><br>
+    <span class="bad">✗ 左邊方塊被推到右邊去了 = 不支援</span><br>
+    （這一項也請看上面那行實測數值，比看圖更準）
+  </p>
+</div>
+
+<!-- ===== 5. calc() 混 env() ===== -->
+<div class="item">
+  <h2><span class="ch">關鍵</span>calc() 裡混 env() <span class="usage">主專案用了 10 處，是最致命的寫法</span></h2>
+  <p class="claim cl-calcenv"></p>
+  <p class="trap">
+    這一項測的不是某個特性，而是<b>失敗方式</b>。<code>calc()</code> 裡只要有一個看不懂的東西，
+    <b>整條規則會被整個丟掉</b>，不是退化成一半正確。主專案寫的
+    <code>height: calc(100dvh - env(...))</code> 就是這種寫法 —— 高度會直接消失，整個版面塌掉。
+  </p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：calc(80px + env())</div>
+      <div class="t-calcenv"></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：寫死 80px</div>
+      <div class="r-calcenv"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩個藍色長條一樣高嗎？</b><br>
+    <span class="ok">✓ 一樣高 = 支援</span><br>
+    <span class="bad">✗ 左邊完全不見了（高度變成 0）= 不支援</span>
+  </p>
+</div>
+
+<div class="pager">
+  <a href="01-baseline.html">← 上一頁</a>
+  <span>3 / 6</span>
+  <a href="03-fn.html">下一頁 →</a>
+</div>
+
+<footer>
+  <span class="b">build __BUILD__</span> · <span class="fp-env"></span>
+  <span class="u fp-ua"></span>
+</footer>
+
+<script src="fingerprint.js"></script>
+</html>

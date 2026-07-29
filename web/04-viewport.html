@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4. 視窗單位 · CSS 支援度測試</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="claims.css">
+<style>
+/* --------------------------------------------------------------------------
+   本頁的 dvh 是首要嫌犯 —— 主專案用了 96 處，需要 Chromium 108。
+
+   這一頁的判讀標準跟其他頁不同，理由必須講清楚：
+   dvh 的參考只能用 vh（Chromium 20 就支援），但在「有網址列的瀏覽器」裡
+   100dvh 和 100vh 的值本來就不相等 —— vh 對應最大視窗，dvh 對應當前視窗。
+   所以對方若用 Chrome 開這一頁，左右高度會有落差，那是正常的，不是壞掉。
+
+   因此這一頁的判讀不是「左右是否等高」，而是「左邊還在不在」：
+     支援   → 有高度（可能略短於右邊）
+     不支援 → 整條宣告被丟棄 → height:auto → 內容是空的 → 高度 0 → 完全消失
+   落差與消失是兩種完全不同的畫面，不會混淆。另外也用 JS 印出實測像素值。
+   -------------------------------------------------------------------------- */
+
+.vbar { background: #4a7fb5; }
+
+/* 1. :has() —— Chromium 105（錨點，主專案沒用到） */
+.t-has, .r-has {
+  width: 100px;
+  height: 34px;
+  background: #ddd;
+}
+.t-has:has(b) { background: #4a7fb5; }
+.r-has { background: #4a7fb5; }
+
+/* 2. dvh —— Chromium 108，96 處 */
+.t-dvh { height: 12dvh; }
+.r-vh  { height: 12vh; }
+
+/* 3. svh —— Chromium 108 */
+.t-svh { height: 12svh; }
+
+/* 4. color-mix() —— Chromium 111（錨點）
+   #3f7fbf = rgb(63,127,191)，三個分量都是奇數，跟 255 平均後剛好是整數，
+   所以參考色可以精確寫死成 #9fbfdf，不會有四捨五入的爭議。
+   先塗灰底再用 color-mix 覆蓋：不支援時整條被丟棄 → 留在灰色。 */
+.t-cmix, .r-cmix {
+  width: 100px;
+  height: 34px;
+  background: #ddd;
+}
+.t-cmix { background: color-mix(in srgb, #3f7fbf 50%, #ffffff); }
+.r-cmix { background: #9fbfdf; }
+</style>
+
+<h1>4. 視窗單位</h1>
+<p class="sub">Chromium 105~111 · 共 6 頁 · 這是第 5 頁</p>
+<div class="fp-top fp-env"></div>
+
+<div class="pager">
+  <a href="03-fn.html">← 上一頁</a>
+  <span>5 / 6</span>
+  <a href="05-visual.html">下一頁 →</a>
+</div>
+
+<div class="howto">
+  <b>這一頁的判讀方式跟前面不一樣</b>，請看第 2、3 項的說明 —— 那兩項<b>不是</b>比左右一樣高，而是看<b>左邊還在不在</b>。
+</div>
+
+<!-- ===== 1. :has() ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 105</span>:has() 選擇器 <span class="usage">主專案目前 0 處 · 版本錨點</span></h2>
+  <p class="claim cl-has"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：用 :has() 上色</div>
+      <div class="t-has"><b></b></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：直接上色</div>
+      <div class="r-has"><b></b></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩個方塊都是藍色嗎？</b><br>
+    <span class="ok">✓ 左右都藍 = 支援</span><br>
+    <span class="bad">✗ 左邊是灰色的 = 不支援</span>
+  </p>
+</div>
+
+<!-- ===== 2. dvh（首要嫌犯） ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 108</span>dvh 單位 <span class="usage">主專案用了 96 處 · 首要嫌犯</span></h2>
+  <p class="claim cl-dvh"></p>
+  <p class="metric fp-dvh-value"></p>
+  <p class="trap">
+    <b>這一項不要比「左右一樣高」。</b>
+    在有網址列的瀏覽器裡，<code>dvh</code> 和 <code>vh</code> 的值本來就會差一點，那是正常的。
+    <b>要看的是左邊那條有沒有完全消失。</b>
+  </p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：height 12dvh</div>
+      <div class="vbar t-dvh" id="dvh-test"></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：height 12vh</div>
+      <div class="vbar r-vh" id="dvh-ref"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左邊那條藍色長條還看得見嗎？</b><br>
+    <span class="ok">✓ 看得見 = 支援（比右邊矮一點是正常的）</span><br>
+    <span class="bad">✗ 完全不見了，那一格空空的 = 不支援</span><br>
+    （也請看上面那行實測數值，左邊顯示 0px 就是不支援）
+  </p>
+</div>
+
+<!-- ===== 3. svh ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 108</span>svh 單位 <span class="usage">跟 dvh 同一批實作 · 交叉驗證</span></h2>
+  <p class="claim cl-svh"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：height 12svh</div>
+      <div class="vbar t-svh"></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：height 12vh</div>
+      <div class="vbar r-vh"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>同上，看左邊那條還在不在。</b><br>
+    <span class="ok">✓ 看得見 = 支援</span><br>
+    <span class="bad">✗ 完全不見 = 不支援</span><br>
+    <span class="usage">這一項的結果應該跟上一項相同（同一批實作）。</span>
+  </p>
+</div>
+
+<!-- ===== 4. color-mix() ===== -->
+<div class="item">
+  <h2><span class="ch">Ch 111</span>color-mix() <span class="usage">主專案目前 0 處 · 版本錨點</span></h2>
+  <p class="claim cl-cmix"></p>
+  <div class="ref">
+    <div class="ref-cell">
+      <div class="ref-label">測試：color-mix() 調色</div>
+      <div class="t-cmix"></div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-label">參考：寫死同一個色</div>
+      <div class="r-cmix"></div>
+    </div>
+  </div>
+  <p class="verdict"><b>左右兩個方塊顏色一樣嗎？</b><br>
+    <span class="ok">✓ 兩邊都是同樣的淺藍色 = 支援</span><br>
+    <span class="bad">✗ 左邊是灰色的 = 不支援</span>
+  </p>
+</div>
+
+<div class="pager">
+  <a href="03-fn.html">← 上一頁</a>
+  <span>5 / 6</span>
+  <a href="05-visual.html">下一頁 →</a>
+</div>
+
+<footer>
+  <span class="b">build __BUILD__</span> · <span class="fp-env"></span>
+  <span class="u fp-ua"></span>
+</footer>
+
+<script src="fingerprint.js"></script>
+</html>
