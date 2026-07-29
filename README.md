@@ -238,7 +238,7 @@ adb shell dumpsys package com.android.webview | grep versionName   # 應該是 5
 
 ```sh
 adb install -r shell-capacitor/android/app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n live.goer.csstest.system/.MainActivity
+adb shell am start -n dev.csstest.system/.MainActivity
 adb exec-out screencap -p > shot.png
 ```
 

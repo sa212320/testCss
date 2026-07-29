@@ -1,4 +1,4 @@
-package live.goer.csstest.bundled
+package dev.csstest.bundled
 
 import android.app.Activity
 import android.os.Bundle
@@ -44,7 +44,7 @@ class MainActivity : Activity() {
         // 兩個殼必須看到同一份測試頁，否則左右兩欄的對照就沒有意義。
         //
         // intent 帶 data 時優先用它，方便開發時直接跳到某一頁：
-        //   adb shell am start -n live.goer.csstest.bundled/.MainActivity \
+        //   adb shell am start -n dev.csstest.bundled/.MainActivity \
         //     -d "https://sa212320.github.io/testCss/06-modern.html"
         // 沒有這條路徑的話，只能靠 adb input tap 點連結導航，
         // 而 tap 很容易誤觸長按而跳出文字選取選單（實際踩過兩次）。

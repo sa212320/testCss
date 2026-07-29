@@ -1,4 +1,4 @@
-package live.goer.csstest.system;
+package dev.csstest.system;
 
 import com.getcapacitor.BridgeActivity;
 

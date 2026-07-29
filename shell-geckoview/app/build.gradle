@@ -4,14 +4,14 @@ plugins {
 }
 
 android {
-    namespace 'live.goer.csstest.bundled'
+    namespace 'dev.csstest.bundled'
 
     // 必須是 36：GeckoView 153 依賴的 androidx.media3 1.10.1 要求編譯時
     // 至少對著 API 36。這也是這個殼的 AGP 要比 Capacitor 殼新的原因。
     compileSdk 36
 
     defaultConfig {
-        applicationId "live.goer.csstest.bundled"
+        applicationId "dev.csstest.bundled"
 
         // GeckoView 153 要求 26。目標裝置是 Android 11（API 30），綽綽有餘。
         // Capacitor 殼那邊保持 23 不動 —— 它沒有這個限制，留低一點比較通用。
